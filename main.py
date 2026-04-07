@@ -1,0 +1,57 @@
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+from typing import Optional
+
+app= FastAPI(
+    title="Yoo",
+    description="REST API",
+    version="1.0.0"
+)
+
+fake_db: dict[int, dict]= {
+    1: {"id":1, "name": "Rishi", "age":21},
+    2: {"id":2, "name": "Chintu", "age":20},
+    3: {"id":3, "name": "Mohith ", "age":21},
+    4: {"id":4, "name": "Lohitaksha ", "age":20},
+    5: {"id":5, "name": "DK ", "age":21},
+
+}
+
+next_id=6
+
+class UserCreate(BaseModel):
+    name:str
+    age:int
+
+class UserUpdate(BaseModel) :
+    name: Optional[str] = None
+    age: Optional[int] = None
+
+class UserResponse(BaseModel) :
+    id: int
+    name:str
+    age:int
+
+#ROUTES
+
+@app.get("/")
+def root () :
+    return {"message":"API is Running..."}
+
+
+@app.get("/users", response_model=UserResponse)
+def get_user(user_id: int):
+    if user_id not in fake_db :
+        raise HTTPException(status_code=404,detail="User not found")
+    return fake_db[user_id]
+
+
+@app.post("/users", response_model=UserResponse, status_code=201) 
+def create_user(user: UserCreate) :
+    global next_id
+    new_user = {"id": next_id, "name" : user.name, "age": user.age}
+    fake_db[next_id]= new_user
+    next_id+=1
+    return new_user
+
+    
